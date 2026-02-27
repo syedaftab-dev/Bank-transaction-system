@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
+// ! New Method of `User Schema`
 const userSchema = new mongoose.Schema({
     
     email:{
@@ -25,21 +26,23 @@ const userSchema = new mongoose.Schema({
     timestamps: true,   
 })
 
-// pre -> runs before saving the user
+// ! pre -> runs before saving the user
+
 userSchema.pre("save",async function(next){
     // if password is not modified then return
     if(!this.isModified("password")){
-        return next();
+        return;
     }
     // hash the password
     const hash = await bcrypt.hash(this.password,10); 
 
     this.password = hash;
 
-    return next();
+    return;
 })
 
-// compare password with hashed password in database and return true or false
+// ? compare password with hashed password in database and return true or false
+
 userSchema.methods.comparePassword = async function(password){
     return await bcrypt.compare(password,this.password);
 }
