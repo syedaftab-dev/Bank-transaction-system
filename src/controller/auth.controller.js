@@ -1,5 +1,7 @@
 const userModel = require("../models/user.model");
 const jwt = require("jsonwebtoken");
+const emailService = require("../services/email.service");
+
 
 // ! User register Controller - post /api/auth/register
 async function userRegisterController(req,res){
@@ -47,6 +49,10 @@ async function userRegisterController(req,res){
             message: "User created successfully",
             status: "success"
         })
+
+        // * send welcome email to user after registration
+        await emailService.sendRegistrationEmail(user.email, user.name);
+
 
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error", status: "failed", error: error.message });
