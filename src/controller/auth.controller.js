@@ -23,6 +23,9 @@ async function userRegisterController(req,res){
             name
         })
         
+        // Save user to database
+        await user.save();
+        
         // create token
         const token = jwt.sign({userId: user._id}, process.env.JWT_SECRET, {expiresIn:"3d"});
 
@@ -50,6 +53,52 @@ async function userRegisterController(req,res){
     }
 }
 
+// ! User login Controller - post /api/auth/login
+async function userLoginController(req,res){
+    try {
+        const {email,password} = req.body;
+
+        const user = await userModel.findOne({email}).select("+password"); // select password because in schema we set select: false for password field otherwise it will return undefined and we can't compare password in login controller
+
+        if(!user){
+            return res.status(401).json({message: "Invalid email or password", status: "failed"});
+        }
+
+        const isValidPassword = await user.comparePassword(password);
+
+        if(!isValidPassword){
+            return res.status(401).json({message: "Invalid email or password", status: "failed"});
+        }
+
+        // if password is corect make a token
+        const token = jwt.sign({userId: user._id}, process.env.JWT_SECRET, {expiresIn:"3d"});
+
+            // ! set cookie and make it secure in production
+            res.cookie("token", token,{
+                maxAge: 3*24*60*60*1000,
+                httpsOnly: true, // prevent XSS attack
+                sameSite: "strict", // prevent CSRF attacks
+                // secure: process.env.NODE_ENV === "production"
+            });
+
+            res.status(200).json({
+                user:{
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email
+                },
+                token,
+                message: "User logged in successfully",
+                status: "success"
+            })
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error", status: "failed", error: error.message });
+    }
+}
+
 module.exports = {
     userRegisterController
+    ,userLoginController
 }
+
+
