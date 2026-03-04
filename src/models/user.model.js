@@ -22,6 +22,13 @@ const userSchema = new mongoose.Schema({
         minlength: [6,"Password must be at least 6 characters long"],
         select: false, // not show password in response
     },
+    // shows which user admin or normal, so must be encrpyeted use select false
+    systemUser: {
+        type: Boolean,
+        default: false,
+        immutable: true, // once set, systemUser field cannot be changed
+        select: false, // not show systemUser in response
+    }
 },{
     timestamps: true,   
 })

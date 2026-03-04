@@ -50,4 +50,18 @@ async function sendRegistrationEmail(userEmail, name) {
   await sendEmail(userEmail, subject, text, html);
 }
 
-module.exports = { sendEmail, sendRegistrationEmail };
+async function sendTransactionNotificationEmail(userEmail, name, amount, toAccountId) {
+  const subject = "Transaction Successful!";
+  const text = `Hi ${name}, your transaction of amount ${amount} to account ${toAccountId} was successful.`;
+  const html = `
+    <h1>Transaction Successful!</h1>
+    <p>Hi ${name},</p>
+    <p>Your transaction of amount <strong>${amount}</strong> to account <strong>${toAccountId}</strong> was successful.</p>
+  `;
+  await sendEmail(userEmail, subject, text, html);
+}
+
+module.exports = {
+  sendRegistrationEmail,
+  sendTransactionNotificationEmail,
+};
