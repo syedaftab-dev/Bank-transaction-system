@@ -289,9 +289,9 @@
 			"typeName": "shape"
 		},
 		{
-			"x": 293.159211338124,
-			"y": 277.8592428078571,
-			"z": 0.531441,
+			"x": 141.4912583094212,
+			"y": -87.40962674966295,
+			"z": 0.7600593456858908,
 			"meta": {},
 			"id": "camera:page:page",
 			"typeName": "camera"
@@ -384,6 +384,36 @@
 									"text": "from occuring/repeating more than 1 if there is some issue(like n/w etc)"
 								}
 							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							}
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "ex: If a transaction is failed/pending the transaction is crried out again with same "
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "idempotent key ,this will prevent from double trnasctions"
+								}
+							]
 						}
 					]
 				}
@@ -393,10 +423,10 @@
 			"typeName": "shape"
 		},
 		{
-			"editingShapeId": null,
+			"editingShapeId": "shape:ZPT2LBw8vo70yyuEBAXOf",
 			"croppingShapeId": null,
 			"selectedShapeIds": [
-				"shape:aX5z5Pvy5rARM_Ps_onz1"
+				"shape:ZPT2LBw8vo70yyuEBAXOf"
 			],
 			"hoveredShapeId": null,
 			"erasingShapeIds": [],
@@ -874,16 +904,11 @@
 		{
 			"followingUserId": null,
 			"opacityForNextShape": 1,
-			"stylesForNextShape": {
-				"tldraw:geo": "rectangle",
-				"tldraw:size": "xl",
-				"tldraw:color": "green",
-				"tldraw:fill": "solid"
-			},
+			"stylesForNextShape": {},
 			"brush": null,
 			"scribbles": [],
 			"cursor": {
-				"type": "move",
+				"type": "default",
 				"rotation": 0
 			},
 			"isFocusMode": false,
