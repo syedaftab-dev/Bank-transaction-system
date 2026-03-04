@@ -27,6 +27,7 @@ const transactionSchema = new mongoose.Schema({
         required: [true, "Amount is required"],
         min: [0, "Amount must be a positive number"]
     },
+    // ! to track the transaction history and ensure idempotency, we will use a unique idempotency key for each transaction request. This will help us to prevent duplicate transactions in case of network issues or retries.
     idempotencyKey: {
         type: String,
         required: [true, "Idempotency key is required"],
