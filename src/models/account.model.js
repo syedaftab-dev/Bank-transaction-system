@@ -29,10 +29,11 @@ accountSchema.index({ user: 1,status: 1});
 // * “User aur status ke combination pe ek index bana do. user + status ”
 // ? EX - Account.find({ user: "U123", status: "ACTIVE" }); without index it will scan all accounts, with index it will directly go to the relevant entries, improving performance significantly. This is called as Compound index
 
-// ! to get balance of an accouunt
+// ! to get balance of an accouunt from ledger instead storing it separalty
 // creating getBalance function in account Schema, always use normal funciton dont use arrow
 accountSchema.methods.getBalance = async function(){
     // we will calculate the balance by summing up all the ledger entries for this account.
+    
     
     // aggregate(array) - to run custom query in DB(ledgerModel)
     const balanceData = await ledgerModel.aggregate([

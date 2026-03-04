@@ -1,7 +1,9 @@
 /*
 !   createdTransaction Controller Use Case:
-    * Jab koi Paisa bheje tho ustime ye sab check karna hai
-    ! fromUserAccount to toUserAccount 
+    
+   * Kisi user ne paisa bhejne ki request ki → server pe aake ye function step-by-step validation karta hai taaki duplicate transaction, invalid account, ya insufficient balance jaise issues na ho.
+
+
 ?  1. Validate the request body to ensure that all required fields are present and correctly formatted.
 ?  2. Vlidate Idempotency Key
 ?  3. check account status
@@ -86,4 +88,58 @@ async function createdTransactionController(req, res) {
             message: `Insufficient balance. curren balance is ${balance} and requested amount is ${amount}`,
         })
     }
+
+    // ? steps 5,6,7,8 must work together if not no one has to work
+    // ! 5. Create transaction with status PENDING
+    const session = await transactionModel.startSession();
+    session.startTransaction();
+    
+    const transaction = await transactionModel.create({
+        fromAccount,
+        toAccount,
+        amount,
+        idempotencyKey,
+        status: "PENDING",
+    },{
+        session, // to ensure 5,6,7,8,all works together or none
+    });
+    // ! 6. Create Debit(Received) ledger entry
+    const debitLedgerEntry = await ledgerModel.create({
+        account: fromAccount,
+        amount: amount,
+        transaction: transaction._id,
+        type: "DEBIT",
+    },{
+        session, // to ensure 5,6,7,8,all works together or none
+    
+    })
+    // ! 7. create credit(cut howe) ledger entry
+    const creditLedgerEntry = await ledgerModel.create({
+        account: toAccount,
+        amount: amount,
+        transaction: transaction._id,
+        type: "CREDIT",
+    },{
+        session, // to ensure 5,6,7,8,all works together or none
+    })
+
+    // ! 8. Mark transaction as COMPLETED
+    transaction.status = "COMPLETED";
+    await transaction.save({ session }); // save transaction with session to ensure 5,6,7,8,all works together or none
+
+
+    // ! 9. Commit MongoDB session
+    await session.commitTransaction();
+    session.endSession();
+
+    // ! 10. Send email notification
+    await emailService.sendTransactionEmail(req.user.email,req.user.name,amount,toAccount._id);
+
+    return res.status(201).json({
+        message: "Transaction completed successfully",
+        transaction,
+    });
+
 }
+
+module.exports = { createdTransactionController };
