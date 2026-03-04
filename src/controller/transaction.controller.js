@@ -96,32 +96,36 @@ async function createdTransactionController(req, res) {
     const session = await transactionModel.startSession();
     session.startTransaction();
     
-    const transaction = await transactionModel.create({
+    const transaction = new transactionModel({
         fromAccount,
         toAccount,
         amount,
         idempotencyKey,
         status: "PENDING",
-    },{
-        session, // to ensure 5,6,7,8,all works together or none
     });
-    // ! 6. Create Debit(Received) ledger entry
-    const debitLedgerEntry = await ledgerModel.create({
+    // ! 6. Create Debit(cut hue) ledger entry
+    const debitLedgerEntry = await ledgerModel.create([{
         account: fromAccount,
         amount: amount,
         transaction: transaction._id,
         type: "DEBIT",
-    },{
+    }],{
         session, // to ensure 5,6,7,8,all works together or none
     
     })
-    // ! 7. create credit(cut howe) ledger entry
-    const creditLedgerEntry = await ledgerModel.create({
+    // what paise cutte par dusre main nai aye
+    // paise received after 1000*100 ms
+    await (()=>{
+        return new Promise((resolve)=>setTimeout(resolve,1000*100)) // simulating delay in credit ledger entry creation to test idempotency key and transaction status
+    })()
+
+    // ! 7. create credit(received) ledger entry
+    const creditLedgerEntry = await ledgerModel.create([{
         account: toAccount,
         amount: amount,
         transaction: transaction._id,
         type: "CREDIT",
-    },{
+    }],{
         session, // to ensure 5,6,7,8,all works together or none
     })
 
@@ -135,7 +139,7 @@ async function createdTransactionController(req, res) {
     session.endSession();
 
     // ! 10. Send email notification
-    await emailService.sendTransactionEmail(req.user.email,req.user.name,amount,toAccount._id);
+    // await emailService.sendTransactionEmail(req.user.email,req.user.name,amount,toAccount._id);
 
     return res.status(201).json({
         message: "Transaction completed successfully",

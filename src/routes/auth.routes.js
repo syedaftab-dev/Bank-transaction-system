@@ -8,5 +8,9 @@ router.post("/register",authController.userRegisterController);
 
 router.post("/login",authController.userLoginController);
 
+
+
+
+
 // export the router so it can be used by app.js
 module.exports = router;
