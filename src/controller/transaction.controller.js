@@ -91,52 +91,64 @@ async function createdTransactionController(req, res) {
         })
     }
 
-    // ? steps 5,6,7,8 must work together if not no one has to work
-    // ! 5. Create transaction with status PENDING
-    const session = await transactionModel.startSession();
-    session.startTransaction();
-    
-    const transaction = new transactionModel({
-        fromAccount,
-        toAccount,
-        amount,
-        idempotencyKey,
-        status: "PENDING",
-    });
-    // ! 6. Create Debit(cut hue) ledger entry
-    const debitLedgerEntry = await ledgerModel.create([{
-        account: fromAccount,
-        amount: amount,
-        transaction: transaction._id,
-        type: "DEBIT",
-    }],{
-        session, // to ensure 5,6,7,8,all works together or none
-    
-    })
-    // what paise cutte par dusre main nai aye
-    // paise received after 1000*100 ms
-    await (()=>{
-        return new Promise((resolve)=>setTimeout(resolve,1000*100)) // simulating delay in credit ledger entry creation to test idempotency key and transaction status
-    })()
+    let transaction;
+    try{
+        // ? steps 5,6,7,8 must work together if not no one has to work
+        // ! 5. Create transaction with status PENDING
+        const session = await transactionModel.startSession();
+        session.startTransaction();
+        
+        transaction = (await transactionModel.create([{
+            fromAccount,
+            toAccount,
+            amount,
+            idempotencyKey,
+            status: "PENDING",
+        }],{session}))[0];
+        // ! 6. Create Debit(cut hue) ledger entry
+        const debitLedgerEntry = await ledgerModel.create([{
+            account: fromAccount,
+            amount: amount,
+            transaction: transaction._id,
+            type: "DEBIT",
+        }],{
+            session, // to ensure 5,6,7,8,all works together or none
+        
+        })
+        // what paise cutte par dusre main nai aye
+        // paise received after 1000*100 ms
+        await (()=>{
+            return new Promise((resolve)=>setTimeout(resolve,15*1000)) // simulating delay in credit ledger entry creation to test idempotency key and transaction status
+        })
+        // 15 sec delay
 
-    // ! 7. create credit(received) ledger entry
-    const creditLedgerEntry = await ledgerModel.create([{
-        account: toAccount,
-        amount: amount,
-        transaction: transaction._id,
-        type: "CREDIT",
-    }],{
-        session, // to ensure 5,6,7,8,all works together or none
-    })
+        // ! 7. create credit(received) ledger entry
+        const creditLedgerEntry = await ledgerModel.create([{
+            account: toAccount,
+            amount: amount,
+            transaction: transaction._id,
+            type: "CREDIT",
+        }],{
+            session, // to ensure 5,6,7,8,all works together or none
+        })
 
-    // ! 8. Mark transaction as COMPLETED
-    transaction.status = "COMPLETED";
-    await transaction.save({ session }); // save transaction with session to ensure 5,6,7,8,all works together or none
+        // ! 8. Mark transaction as COMPLETED
+        await transactionModel.findOneAndUpdate(
+            {_id: transaction._id},
+            {status: "COMPLETED"},
+            {session}
+        ); // save transaction with session to ensure 5,6,7,8,all works together or none
 
 
-    // ! 9. Commit MongoDB session
-    await session.commitTransaction();
-    session.endSession();
+        // ! 9. Commit MongoDB session
+        await session.commitTransaction();
+        session.endSession();
+    }
+    catch(err){
+        return res.status(400).json({
+            message: "transaction is pending, please try again later",
+        })
+    }
 
     // ! 10. Send email notification
     // await emailService.sendTransactionEmail(req.user.email,req.user.name,amount,toAccount._id);
