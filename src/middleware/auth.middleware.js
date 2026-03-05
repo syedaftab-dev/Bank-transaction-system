@@ -1,7 +1,8 @@
 const userModel = require("../models/user.model");
 const jwt = require("jsonwebtoken");
+const blackListModel = require("../models/blacklist.model");
 
-// ! Middleware to protect routes and check if user is authenticated
+// ! Middleware to protect routes and check if user is authentic // Corrected pathated
 async function authMiddleware(req,res,next){
     try{
         // ? Get token from cookies or headers
@@ -13,6 +14,13 @@ async function authMiddleware(req,res,next){
             })
         }
 
+        const isBlackListed = await blackListModel.findOne({token: token});
+
+        if(isBlackListed){
+            return res.status(401).json({
+                message: "Unauthorized access, token is invalid"
+            })
+        }
         try{
             // ? Verify token
             const decoded = jwt.verify(token,process.env.JWT_SECRET); // we will get user id from token
@@ -48,7 +56,12 @@ async function authSystemUserMiddleware(req,res,next){
                 message: "Unauthorized access, token is missing"
             })
         }
-
+        const isBlackListed = await blackListModel.findOne({token: token});
+        if(isBlackListed){
+            return res.status(401).json({
+                message: "Unauthorized access, token is invalid"
+            })
+        }
         const decode = jwt.verify(token,process.env.JWT_SECRET);
 
         const user = await userModel.findById(decode.userId).select("+systemUser");
