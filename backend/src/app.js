@@ -28,14 +28,18 @@ const userRouter = require('./routes/user.routes');
 const checkDbConnection = require('./middleware/db.middleware');
 
 // test api
-app.get("/", (req, res) => {
-    res.status(200).json({
-        status: "success",
-        message: "Bank Transaction Service is up and running"
-    });
-});
-
 const path = require('path');
+
+// Serve Frontend in Production
+if (process.env.NODE_ENV === 'production') {
+    const frontendBuildPath = path.join(__dirname, '../../frontend/build');
+    app.use(express.static(frontendBuildPath));
+    
+    // Serve frontend for all non-API routes
+    app.get(/^(?!\/api).+/, (req, res) => {
+        res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    });
+}
 
 // ? Routes used in the application
 app.use('/api', checkDbConnection);
@@ -44,23 +48,18 @@ app.use('/api/accounts', accountRouter);
 app.use('/api/transactions', transactionRouter);
 app.use('/api/users', userRouter);
 
-// Serve Frontend in Production
-if (process.env.NODE_ENV === 'production') {
-    const frontendBuildPath = path.join(__dirname, '../../frontend/build');
-    app.use(express.static(frontendBuildPath));
-    
-    // Use a Regular Expression to catch everything (bypasses Express 5 path-to-regexp parsing)
-    app.get(/^(?!\/api).+/, (req, res) => {
-        if (req.originalUrl.startsWith('/api')) {
-            return res.status(404).json({ message: 'API route not found' });
-        }
-        res.sendFile(path.join(frontendBuildPath, 'index.html'));
+// Test API route (only accessible if not served by frontend)
+app.get("/", (req, res) => {
+    res.status(200).json({
+        status: "success",
+        message: "Bank Transaction Service is up and running"
     });
-} else {
-    app.use((req, res, next) => {
-        next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
-    });
-}
+});
+
+// Handle undefined routes (only in development or for missing API routes)
+app.use((req, res, next) => {
+    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
 
 
 // Global Error Handler
