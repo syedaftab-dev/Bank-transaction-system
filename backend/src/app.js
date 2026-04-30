@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const AppError = require('./utils/AppError');
 const globalErrorHandler = require('./middleware/error.middleware');
@@ -12,6 +13,10 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
 app.use(cookieParser());
 app.use(express.json());
 
