@@ -1,7 +1,7 @@
 const accountModel = require('../models/account.model');
 const AppError = require('../utils/AppError');
 
-const createAccount = async (userId) => {
+const createAccount = async (userId, pin = "1234") => {
   // Enforce one account per user
   const existingAccount = await accountModel.findOne({ user: userId });
   if (existingAccount) {
@@ -10,6 +10,7 @@ const createAccount = async (userId) => {
 
   const account = await accountModel.create({
     user: userId,
+    pin: pin
   });
 
   return account;

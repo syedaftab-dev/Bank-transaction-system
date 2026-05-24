@@ -16,6 +16,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
+    "elitebank-root": "file:..",
     "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "joi": "^18.1.2",

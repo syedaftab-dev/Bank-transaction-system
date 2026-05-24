@@ -4,6 +4,7 @@ const blackListModel = require('../models/blacklist.model');
 const redisClient = require('../config/redis');
 const AppError = require('../utils/AppError');
 const emailService = require('./email.service');
+const accountService = require('./account.service');
 
 const signToken = (id) => {
   return jwt.sign({ userId: id }, process.env.JWT_SECRET, {
@@ -24,6 +25,9 @@ const registerUser = async (userData) => {
     email,
     password,
   });
+
+  // Automatically create an account for the new user
+  await accountService.createAccount(user._id);
 
   const token = signToken(user._id);
 
