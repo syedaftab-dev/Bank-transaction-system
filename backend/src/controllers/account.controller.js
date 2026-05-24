@@ -38,10 +38,14 @@ const getAccountBalanceController = catchAsync(async (req, res, next) => {
 });
 
 const getMyAccountController = catchAsync(async (req, res, next) => {
-  const accounts = await accountService.getUserAccounts(req.user._id);
+  let accounts = await accountService.getUserAccounts(req.user._id);
+  
   if (!accounts || accounts.length === 0) {
-    return next(new AppError('No account found', 404));
+    // Lazy initialization: create an account if it doesn't exist (fixes old users)
+    const newAccount = await accountService.createAccount(req.user._id);
+    return res.status(200).json(newAccount);
   }
+  
   // Return the first account directly to match frontend expectation
   res.status(200).json(accounts[0]);
 });
